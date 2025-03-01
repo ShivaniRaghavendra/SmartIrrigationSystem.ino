@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Irrigation System Dashboard</title>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            text-align: center;
+            background: linear-gradient(135deg, #8675c2, #c26bd3);
+            color: white;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 500px;
+            color: #333;
+            transition: transform 0.3s ease-in-out;
+        }
+        .container:hover {
+            transform: scale(1.02);
+        }
+        h1 {
+            font-size: 2em;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .data {
+            font-size: 1.4em;
+            margin: 15px 0;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f7f7f7;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .value {
+            padding: 5px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            background: #e0f2f1;
+            color: #00796B;
+        }
+        .status {
+            font-size: 1.2em;
+            padding: 8px;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+        }
+        .on { background: #4CAF50; }
+        .off { background: #D32F2F; }
+        .rain-yes { color: #1565C0; }
+        .rain-no { color: #9E9E9E; }
+        button {
+            padding: 12px 20px;
+            font-size: 1em;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            background: #2196F3;
+            color: white;
+            border-radius: 8px;
+            transition: background 0.3s, transform 0.2s;
+            margin-top: 15px;
+        }
+        button:hover {
+            background: #1976D2;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌱 Irrigation System Dashboard</h1>
+        <p class="data">Soil Moisture: <span id="moisture" class="value">--</span></p>
+        <p class="data">Temperature: <span id="temperature" class="value">--</span>°C</p>
+        <p class="data">Humidity: <span id="humidity" class="value">--</span>%</p>
+        <p class="data">Rain: <span id="rain" class="value rain-no">--</span></p>
+        <p class="data">Pump Status: <span id="pump" class="status off">OFF</span></p>
+        <button onclick="togglePump()">Toggle Pump</button>
+    </div>
+    
+    <script>
+        const THINGSPEAK_API_URL = "https://api.thingspeak.com/channels/2855155/feeds.json?results=1";
+        const THINGSPEAK_API_KEY = "UEFBE2B2QFY7K9H9"; // Replace with your Read API Key
+        
+        function fetchThingSpeakData() {
+            fetch(`${THINGSPEAK_API_URL}&api_key=${THINGSPEAK_API_KEY}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.feeds.length > 0) {
+                        const latest = data.feeds[0];
+                        document.getElementById("moisture").innerText = latest.field1 || "--";
+                        document.getElementById("temperature").innerText = latest.field2 || "--";
+                        document.getElementById("humidity").innerText = latest.field3 || "--";
+                        
+                        const rainElement = document.getElementById("rain");
+                        rainElement.innerText = latest.field4 == "1" ? "Yes" : "No";
+                        rainElement.className = latest.field4 == "1" ? "value rain-yes" : "value rain-no";
+
+                        const pumpElement = document.getElementById("pump");
+                        pumpElement.innerText = latest.field5 == "1" ? "ON" : "OFF";
+                        pumpElement.className = latest.field5 == "1" ? "status on" : "status off";
+                    }
+                })
+                .catch(error => console.error("Error fetching ThingSpeak data:", error));
+        }
+
+        setInterval(fetchThingSpeakData, 5000); // Fetch data every 5 seconds
+
+        function togglePump() {
+            alert("Pump control is managed via ESP32 & MQTT. Manual control via ThingSpeak is not implemented.");
+        }
+    </script>
+</body>
+</html>
